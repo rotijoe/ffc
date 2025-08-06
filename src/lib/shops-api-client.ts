@@ -1,6 +1,5 @@
-import { supabaseServer } from './supabase-server'
-import type { FriedChickenShop, UserLocation } from './supabase-server'
-import { cache } from 'react'
+import { supabase } from './supabase'
+import type { UserLocation } from './supabase'
 
 const ITEMS_PER_PAGE = 10
 
@@ -24,12 +23,12 @@ export interface ShopListData {
   pagination: PaginationState
 }
 
-// Cache the function to avoid duplicate requests during the same render
-export const getShops = cache(async (page: number = 1): Promise<ShopListData> => {
+// Client-side function to get shops without location
+export async function getShopsClient(page: number = 1): Promise<ShopListData> {
   const from = (page - 1) * ITEMS_PER_PAGE
   const to = from + ITEMS_PER_PAGE - 1
 
-  const { data, error, count } = await supabaseServer
+  const { data, error, count } = await supabase
     .from('fried_chicken_shops')
     .select('fhrs_id, business_name, address', { count: 'exact' })
     .order('business_name', { ascending: true })
@@ -52,19 +51,17 @@ export const getShops = cache(async (page: number = 1): Promise<ShopListData> =>
       hasPreviousPage: page > 1
     }
   }
-})
+}
 
-// Get shops sorted by distance from user location
-export const getShopsNearLocation = cache(async (
+// Client-side function to get shops sorted by distance from user location
+export async function getShopsNearLocationClient(
   userLocation: UserLocation,
   page: number = 1
-): Promise<ShopListData> => {
+): Promise<ShopListData> {
   const from = (page - 1) * ITEMS_PER_PAGE
-  const to = from + ITEMS_PER_PAGE - 1
 
-  // First, let's check if PostGIS is available by trying a simple distance query
   try {
-    const { data, error, count } = await supabaseServer
+    const { data, error } = await supabase
       .rpc('get_shops_with_distance', {
         user_lat: userLocation.latitude,
         user_lng: userLocation.longitude,
@@ -75,7 +72,7 @@ export const getShopsNearLocation = cache(async (
     if (error) {
       console.warn('PostGIS function not available, falling back to basic query:', error.message)
       // Fallback to basic query without distance calculation
-      return getShops(page)
+      return getShopsClient(page)
     }
 
     const totalCount = data?.length > 0 ? data[0].total_count || 0 : 0
@@ -101,11 +98,11 @@ export const getShopsNearLocation = cache(async (
   } catch (err) {
     console.warn('Distance query failed, falling back to basic query:', err)
     // Fallback to basic query
-    return getShops(page)
+    return getShopsClient(page)
   }
-})
+}
 
-// Utility functions
+// Utility functions (reused from server API)
 export function formatAddress(address: string | null): string {
   if (!address) return 'Address not available'
   return address.trim()

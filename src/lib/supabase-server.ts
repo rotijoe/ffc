@@ -24,4 +24,10 @@ export type FriedChickenShop = {
   latitude: number | null
   longitude: number | null
   synced_at: string | null
+  distance_miles?: number // Calculated distance from user location
+}
+
+export interface UserLocation {
+  latitude: number
+  longitude: number
 }

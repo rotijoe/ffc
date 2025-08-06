@@ -1,6 +1,5 @@
-import { Suspense } from 'react'
-import { ShopListServer } from './components/shop-list-server'
-import { ShopListSkeleton } from './components/shop-list-skeleton'
+import { getShops } from '@/lib/shops-api'
+import { ShopsClientWrapper } from './components/shops-client-wrapper'
 
 type Props = {
   searchParams: Promise<{ page?: string }>
@@ -9,6 +8,9 @@ type Props = {
 export default async function ShopsPage({ searchParams }: Props) {
   const params = await searchParams
   const page = Number(params.page) || 1
+
+  // Get initial data on server side for better SEO and initial render
+  const initialData = await getShops(page)
 
   return (
     <div className='container mx-auto px-4 py-8'>
@@ -21,9 +23,7 @@ export default async function ShopsPage({ searchParams }: Props) {
         </p>
       </div>
 
-      <Suspense fallback={<ShopListSkeleton />}>
-        <ShopListServer page={page} />
-      </Suspense>
+      <ShopsClientWrapper initialData={initialData} initialPage={page} />
     </div>
   )
 }
