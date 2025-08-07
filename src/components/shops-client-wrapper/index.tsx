@@ -2,12 +2,7 @@
 
 import { useGeolocation } from '@/hooks/use-geolocation'
 import { ShopListClient } from '../shop-list-client'
-import type { ShopListData } from '@/lib/shops-api-client'
-
-interface ShopsClientWrapperProps {
-  initialData: ShopListData
-  initialPage: number
-}
+import type { ShopsClientWrapperProps } from './types'
 
 export function ShopsClientWrapper({
   initialData,

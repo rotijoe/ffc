@@ -3,35 +3,35 @@
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
-import type { PaginationState } from '@/lib/shops-api'
+import {
+  buildNavigationUrl,
+  calculateDisplayRange,
+  generatePageNumbers
+} from './helpers'
+import { PAGINATION_CONFIG, BUTTON_TEXT } from './constants'
+import type { PaginationControlsProps } from './types'
 
-type Props = {
-  pagination: PaginationState
-}
-
-export function PaginationControls({ pagination }: Props) {
+export function PaginationControls({ pagination }: PaginationControlsProps) {
   const router = useRouter()
   const searchParams = useSearchParams()
 
   const navigateToPage = (page: number) => {
-    const params = new URLSearchParams(searchParams.toString())
-    if (page === 1) {
-      params.delete('page') // Remove page param for page 1 (cleaner URLs)
-    } else {
-      params.set('page', page.toString())
-    }
-    const queryString = params.toString()
-    router.push(`/shops${queryString ? `?${queryString}` : ''}`)
+    const url = buildNavigationUrl(searchParams, page)
+    router.push(url)
   }
 
   if (pagination.totalPages <= 1) return null
 
+  const displayRange = calculateDisplayRange(
+    pagination,
+    PAGINATION_CONFIG.ITEMS_PER_PAGE
+  )
+
   return (
     <div className='flex items-center justify-between'>
       <div className='text-sm text-gray-500'>
-        Showing {(pagination.currentPage - 1) * 10 + 1} to{' '}
-        {Math.min(pagination.currentPage * 10, pagination.totalCount)} of{' '}
-        {pagination.totalCount} results
+        Showing {displayRange.start} to {displayRange.end} of{' '}
+        {displayRange.total} results
       </div>
 
       <div className='flex items-center space-x-2'>
@@ -42,7 +42,7 @@ export function PaginationControls({ pagination }: Props) {
           disabled={!pagination.hasPreviousPage}
         >
           <ChevronLeft className='h-4 w-4 mr-1' />
-          Previous
+          {BUTTON_TEXT.PREVIOUS}
         </Button>
 
         <div className='flex items-center space-x-1'>{renderPageNumbers()}</div>
@@ -53,7 +53,7 @@ export function PaginationControls({ pagination }: Props) {
           onClick={() => navigateToPage(pagination.currentPage + 1)}
           disabled={!pagination.hasNextPage}
         >
-          Next
+          {BUTTON_TEXT.NEXT}
           <ChevronRight className='h-4 w-4 ml-1' />
         </Button>
       </div>
@@ -61,39 +61,14 @@ export function PaginationControls({ pagination }: Props) {
   )
 
   function renderPageNumbers() {
-    const { currentPage, totalPages } = pagination
-    const pageNumbers = []
-
-    // Show first page
-    if (currentPage > 3) {
-      pageNumbers.push(1)
-      if (currentPage > 4) {
-        pageNumbers.push('...')
-      }
-    }
-
-    // Show pages around current page
-    for (
-      let i = Math.max(1, currentPage - 2);
-      i <= Math.min(totalPages, currentPage + 2);
-      i++
-    ) {
-      pageNumbers.push(i)
-    }
-
-    // Show last page
-    if (currentPage < totalPages - 2) {
-      if (currentPage < totalPages - 3) {
-        pageNumbers.push('...')
-      }
-      pageNumbers.push(totalPages)
-    }
+    const { currentPage } = pagination
+    const pageNumbers = generatePageNumbers(pagination)
 
     return pageNumbers.map((pageNum, index) => {
-      if (pageNum === '...') {
+      if (pageNum === BUTTON_TEXT.ELLIPSIS) {
         return (
           <span key={`ellipsis-${index}`} className='px-3 py-1 text-gray-500'>
-            ...
+            {BUTTON_TEXT.ELLIPSIS}
           </span>
         )
       }

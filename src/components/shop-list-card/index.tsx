@@ -1,7 +1,7 @@
 import { Card, CardContent } from '@/components/ui/card'
-import { formatAddress, formatBusinessName, formatDistance } from './helpers'
 import { MapPin } from 'lucide-react'
-import { ShopCardProps } from './types'
+import { formatAddress, formatBusinessName, formatDistance } from './helpers'
+import type { ShopCardProps } from './types'
 
 export function ShopCard({ shop }: ShopCardProps) {
   return (

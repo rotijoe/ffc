@@ -1,0 +1,4 @@
+export const SKELETON_CONFIG = {
+  CARD_COUNT: 5,
+  PAGINATION_BUTTON_COUNT: 3
+} as const

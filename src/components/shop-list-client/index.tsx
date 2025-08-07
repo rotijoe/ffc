@@ -2,31 +2,16 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { ShopCard } from '../shop-list-card'
-import { PaginationControls } from '../shop-list-server/pagination-controls'
+import { PaginationControls } from '../pagination-controls'
 import { ShopListSkeleton } from '../shop-list-skeleton'
 import {
   getShopsClient,
   getShopsNearLocationClient,
   type ShopListData
 } from '@/lib/shops-api-client'
-
-interface UserLocation {
-  latitude: number
-  longitude: number
-}
-
-interface GeolocationError {
-  code: number
-  message: string
-}
-
-interface ShopListClientProps {
-  initialData: ShopListData
-  page: number
-  userLocation: UserLocation | null
-  isLocationLoading: boolean
-  locationError: GeolocationError | null
-}
+import { formatErrorMessage, isGeolocationPending } from './helpers'
+import { ERROR_MESSAGES } from './constants'
+import type { ShopListClientProps } from './types'
 
 export function ShopListClient({
   initialData,
@@ -36,21 +21,23 @@ export function ShopListClient({
   locationError
 }: ShopListClientProps) {
   const [data, setData] = useState<ShopListData>(initialData)
-  console.log('data', data)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const isLoadingRef = useRef(false)
   const [hasInitiallyLoaded, setHasInitiallyLoaded] = useState(false)
 
   // Determine if geolocation is still determining location status
-  const isGeolocationPending =
-    isLocationLoading ||
-    (!userLocation && !locationError && !hasInitiallyLoaded)
+  const isGeoLocationPending = isGeolocationPending(
+    isLocationLoading,
+    userLocation,
+    locationError,
+    hasInitiallyLoaded
+  )
 
   useEffect(() => {
     const fetchData = async () => {
       // Don't fetch data while geolocation is still determining location status
-      if (isGeolocationPending || isLoadingRef.current) return
+      if (isGeoLocationPending || isLoadingRef.current) return
 
       isLoadingRef.current = true
       setIsLoading(true)
@@ -69,9 +56,7 @@ export function ShopListClient({
         setData(result)
         setHasInitiallyLoaded(true)
       } catch (err) {
-        setError(
-          err instanceof Error ? err.message : 'An unexpected error occurred'
-        )
+        setError(formatErrorMessage(err))
       } finally {
         isLoadingRef.current = false
         setIsLoading(false)
@@ -79,13 +64,15 @@ export function ShopListClient({
     }
 
     fetchData()
-  }, [userLocation, page, isGeolocationPending])
+  }, [userLocation, page, isGeoLocationPending])
 
   if (error) {
     return (
       <div className='text-center py-12'>
         <div className='bg-red-50 border border-red-200 rounded-lg p-8'>
-          <p className='text-red-600 text-lg mb-2'>Failed to load shops</p>
+          <p className='text-red-600 text-lg mb-2'>
+            {ERROR_MESSAGES.FAILED_TO_LOAD}
+          </p>
           <p className='text-red-500 text-sm'>{error}</p>
         </div>
       </div>
@@ -93,7 +80,7 @@ export function ShopListClient({
   }
 
   // Show loading while geolocation is determining location status or while fetching data
-  if (isGeolocationPending || isLoading) {
+  if (isGeoLocationPending || isLoading) {
     return <ShopListSkeleton />
   }
 
@@ -101,9 +88,11 @@ export function ShopListClient({
     return (
       <div className='text-center py-12'>
         <div className='bg-gray-50 rounded-lg p-8'>
-          <p className='text-gray-500 text-lg'>No fried chicken shops found.</p>
+          <p className='text-gray-500 text-lg'>
+            {ERROR_MESSAGES.NO_SHOPS_FOUND}
+          </p>
           <p className='text-gray-400 text-sm mt-2'>
-            Try adjusting your search or check back later.
+            {ERROR_MESSAGES.TRY_AGAIN}
           </p>
         </div>
       </div>

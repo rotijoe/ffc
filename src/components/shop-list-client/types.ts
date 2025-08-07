@@ -1,0 +1,19 @@
+import type { ShopListData } from '@/lib/shops-api-client'
+
+export interface UserLocation {
+  latitude: number
+  longitude: number
+}
+
+export interface GeolocationError {
+  code: number
+  message: string
+}
+
+export interface ShopListClientProps {
+  initialData: ShopListData
+  page: number
+  userLocation: UserLocation | null
+  isLocationLoading: boolean
+  locationError: GeolocationError | null
+}
