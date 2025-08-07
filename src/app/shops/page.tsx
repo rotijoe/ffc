@@ -9,7 +9,6 @@ export default async function ShopsPage({ searchParams }: Props) {
   const params = await searchParams
   const page = Number(params.page) || 1
 
-  // Get initial data on server side for better SEO and initial render
   const initialData = await getShops(page)
 
   return (
