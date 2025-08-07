@@ -1,5 +1,5 @@
-import { getShops, formatAddress, formatBusinessName } from '@/lib/shops-api'
-import { ShopCard } from './shop-card'
+import { getShops } from '@/lib/shops-api'
+import { ShopCard } from '../shop-list-card'
 import { PaginationControls } from './pagination-controls'
 
 type Props = {

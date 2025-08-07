@@ -16,6 +16,7 @@ export interface ShopListData {
     fhrs_id: number
     business_name: string | null
     address: string | null
+    postcode: string | null
     latitude?: number | null
     longitude?: number | null
     distance_miles?: number
@@ -30,7 +31,7 @@ export async function getShopsClient(page: number = 1): Promise<ShopListData> {
 
   const { data, error, count } = await supabase
     .from('fried_chicken_shops')
-    .select('fhrs_id, business_name, address', { count: 'exact' })
+    .select('fhrs_id, business_name, address, postcode', { count: 'exact' })
     .order('business_name', { ascending: true })
     .range(from, to)
 
@@ -40,7 +41,6 @@ export async function getShopsClient(page: number = 1): Promise<ShopListData> {
 
   const totalCount = count || 0
   const totalPages = Math.ceil(totalCount / ITEMS_PER_PAGE)
-
   return {
     shops: data || [],
     pagination: {
@@ -83,6 +83,7 @@ export async function getShopsNearLocationClient(
         fhrs_id: shop.fhrs_id,
         business_name: shop.business_name,
         address: shop.address,
+        postcode: shop.postcode,
         latitude: shop.latitude,
         longitude: shop.longitude,
         distance_miles: shop.distance_miles
@@ -100,21 +101,4 @@ export async function getShopsNearLocationClient(
     // Fallback to basic query
     return getShopsClient(page)
   }
-}
-
-// Utility functions (reused from server API)
-export function formatAddress(address: string | null): string {
-  if (!address) return 'Address not available'
-  return address.trim()
-}
-
-export function formatBusinessName(name: string | null): string {
-  if (!name) return 'Name not available'
-  return name.trim()
-}
-
-export function formatDistance(distance: number | undefined): string {
-  if (!distance) return ''
-  if (distance < 0.1) return '< 0.1 mi'
-  return `${distance.toFixed(1)} mi`
 }

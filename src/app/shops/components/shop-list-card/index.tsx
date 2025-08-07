@@ -1,23 +1,9 @@
 import { Card, CardContent } from '@/components/ui/card'
-import {
-  formatAddress,
-  formatBusinessName,
-  formatDistance
-} from '@/lib/shops-api'
+import { formatAddress, formatBusinessName, formatDistance } from './helpers'
 import { MapPin } from 'lucide-react'
+import { ShopCardProps } from './types'
 
-type Props = {
-  shop: {
-    fhrs_id: number
-    business_name: string | null
-    address: string | null
-    latitude?: number | null
-    longitude?: number | null
-    distance_miles?: number
-  }
-}
-
-export function ShopCard({ shop }: Props) {
+export function ShopCard({ shop }: ShopCardProps) {
   return (
     <Card className='hover:shadow-md transition-shadow'>
       <CardContent className='p-6'>
@@ -32,7 +18,9 @@ export function ShopCard({ shop }: Props) {
             </div>
           )}
         </div>
-        <p className='text-gray-600'>{formatAddress(shop.address)}</p>
+        <p className='text-gray-600'>
+          {formatAddress(shop.address, shop.postcode)}
+        </p>
       </CardContent>
     </Card>
   )

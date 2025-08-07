@@ -1,5 +1,4 @@
 import { supabaseServer } from './supabase-server'
-import type { FriedChickenShop, UserLocation } from './supabase-server'
 import { cache } from 'react'
 
 const ITEMS_PER_PAGE = 10
@@ -15,10 +14,11 @@ export interface PaginationState {
 export interface ShopListData {
   shops: Array<{
     fhrs_id: number
-    business_name: string | null
-    address: string | null
-    latitude?: number | null
-    longitude?: number | null
+    business_name: string
+    address: string
+    postcode: string
+    latitude?: number
+    longitude?: number
     distance_miles?: number
   }>
   pagination: PaginationState
@@ -31,7 +31,7 @@ export const getShops = cache(async (page: number = 1): Promise<ShopListData> =>
 
   const { data, error, count } = await supabaseServer
     .from('fried_chicken_shops')
-    .select('fhrs_id, business_name, address', { count: 'exact' })
+    .select('fhrs_id, business_name, address, postcode', { count: 'exact' })
     .order('business_name', { ascending: true })
     .range(from, to)
 
@@ -41,7 +41,7 @@ export const getShops = cache(async (page: number = 1): Promise<ShopListData> =>
 
   const totalCount = count || 0
   const totalPages = Math.ceil(totalCount / ITEMS_PER_PAGE)
-
+  console.log(data)
   return {
     shops: data || [],
     pagination: {
@@ -53,71 +53,3 @@ export const getShops = cache(async (page: number = 1): Promise<ShopListData> =>
     }
   }
 })
-
-// Get shops sorted by distance from user location
-export const getShopsNearLocation = cache(async (
-  userLocation: UserLocation,
-  page: number = 1
-): Promise<ShopListData> => {
-  const from = (page - 1) * ITEMS_PER_PAGE
-  const to = from + ITEMS_PER_PAGE - 1
-
-  // First, let's check if PostGIS is available by trying a simple distance query
-  try {
-    const { data, error, count } = await supabaseServer
-      .rpc('get_shops_with_distance', {
-        user_lat: userLocation.latitude,
-        user_lng: userLocation.longitude,
-        page_offset: from,
-        page_limit: ITEMS_PER_PAGE
-      })
-
-    if (error) {
-      console.warn('PostGIS function not available, falling back to basic query:', error.message)
-      // Fallback to basic query without distance calculation
-      return getShops(page)
-    }
-
-    const totalCount = data?.length > 0 ? data[0].total_count || 0 : 0
-    const totalPages = Math.ceil(totalCount / ITEMS_PER_PAGE)
-
-    return {
-      shops: data?.map((shop: any) => ({
-        fhrs_id: shop.fhrs_id,
-        business_name: shop.business_name,
-        address: shop.address,
-        latitude: shop.latitude,
-        longitude: shop.longitude,
-        distance_miles: shop.distance_miles
-      })) || [],
-      pagination: {
-        currentPage: page,
-        totalPages,
-        totalCount,
-        hasNextPage: page < totalPages,
-        hasPreviousPage: page > 1
-      }
-    }
-  } catch (err) {
-    console.warn('Distance query failed, falling back to basic query:', err)
-    // Fallback to basic query
-    return getShops(page)
-  }
-})
-
-// Utility functions
-export function formatAddress(address: string | null): string {
-  if (!address) return 'Address not available'
-  return address.trim()
-}
-
-export function formatBusinessName(name: string | null): string {
-  if (!name) return 'Name not available'
-  return name.trim()
-}
-
-export function formatDistance(distance: number | undefined): string {
-  if (!distance) return ''
-  if (distance < 0.1) return '< 0.1 mi'
-  return `${distance.toFixed(1)} mi`
-}

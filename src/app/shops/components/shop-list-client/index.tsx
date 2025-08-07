@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
-import { ShopCard } from '../shop-list-server/shop-card'
+import { ShopCard } from '../shop-list-card'
 import { PaginationControls } from '../shop-list-server/pagination-controls'
 import { ShopListSkeleton } from '../shop-list-skeleton'
 import {
@@ -36,6 +36,7 @@ export function ShopListClient({
   locationError
 }: ShopListClientProps) {
   const [data, setData] = useState<ShopListData>(initialData)
+  console.log('data', data)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const isLoadingRef = useRef(false)
