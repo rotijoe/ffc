@@ -6,12 +6,12 @@ import { PaginationControls } from '../pagination-controls'
 import { ShopListSkeleton } from '../shop-list-skeleton'
 import {
   getShopsClient,
-  getShopsNearLocationClient,
-  type ShopListData
+  getShopsNearLocationClient
 } from '@/lib/shops-api-client'
 import { formatErrorMessage, isGeolocationPending } from './helpers'
 import { ERROR_MESSAGES } from './constants'
 import type { ShopListClientProps } from './types'
+import { ShopListData } from '@/lib/types'
 
 export function ShopListClient({
   initialData,

@@ -19,10 +19,7 @@ export type FriedChickenShop = {
   distance_miles?: number // Calculated distance from user location
 }
 
-export interface UserLocation {
-  latitude: number
-  longitude: number
-}
+
 
 export interface GeolocationError {
   code: number
