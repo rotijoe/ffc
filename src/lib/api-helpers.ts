@@ -1,4 +1,5 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
+import type { Database } from './database.types'
 import { ITEMS_PER_PAGE } from './constants'
 import type { ShopListData } from './types'
 
@@ -14,7 +15,7 @@ export function calculatePagination(totalCount: number, currentPage: number) {
 }
 
 export async function fetchShops(
-  supabase: SupabaseClient,
+  supabase: SupabaseClient<Database>,
   page: number,
 ): Promise<ShopListData> {
   const from = (page - 1) * ITEMS_PER_PAGE
@@ -22,7 +23,7 @@ export async function fetchShops(
 
   const { data, error, count } = await supabase
     .from('fried_chicken_shops')
-    .select('fhrs_id, business_name, address, postcode', { count: 'exact' })
+    .select('fhrs_id, business_name, address, postcode, latitude, longitude', { count: 'exact' })
     .order('business_name', { ascending: true })
     .range(from, to)
 
@@ -34,7 +35,14 @@ export async function fetchShops(
   const pagination = calculatePagination(totalCount, page)
 
   return {
-    shops: data || [],
+    shops: (data || []).map((row) => ({
+      fhrs_id: row.fhrs_id,
+      business_name: row.business_name,
+      address: row.address,
+      postcode: row.postcode,
+      latitude: row.latitude,
+      longitude: row.longitude,
+    })),
     pagination,
   }
 }

@@ -1,11 +1,11 @@
 import { supabase } from './supabase'
+import type { Database } from './database.types'
 import { ITEMS_PER_PAGE } from './constants'
 import { calculatePagination, fetchShops } from './api-helpers'
-import type {
-  ShopListData,
-  UserLocation,
-  ShopWithDistance,
-} from './types'
+import type { ShopListData, UserLocation, ShopWithDistance } from './types'
+
+type GetShopsWithDistanceRow =
+  Database['public']['Functions']['get_shops_with_distance']['Returns'][number]
 
 export function getShopsClient(page: number = 1): Promise<ShopListData> {
   return fetchShops(supabase, page)
@@ -38,16 +38,20 @@ export async function getShopsNearLocationClient(
       return getShopsClient(page)
     }
 
-    const totalCount = data?.length > 0 ? data[0].total_count || 0 : 0
+    const rows = (data || []) as GetShopsWithDistanceRow[]
+    const totalCount = rows.length > 0 ? rows[0].total_count || 0 : 0
     const pagination = calculatePagination(totalCount, page)
 
     return {
-      shops:
-        data?.map(
-          (shop: ShopWithDistance) => ({
-            ...shop,
-          }),
-        ) || [],
+      shops: rows.map((row) => ({
+        fhrs_id: row.fhrs_id,
+        business_name: row.business_name,
+        address: row.address,
+        postcode: row.postcode,
+        latitude: row.latitude,
+        longitude: row.longitude,
+        distance_miles: row.distance_miles,
+      } satisfies ShopWithDistance)),
       pagination,
     }
   } catch (err) {

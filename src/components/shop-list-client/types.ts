@@ -1,4 +1,4 @@
-import type { ShopListData } from '@/lib/shops-api-client'
+import type { ShopListData } from '@/lib/types'
 
 export interface UserLocation {
   latitude: number

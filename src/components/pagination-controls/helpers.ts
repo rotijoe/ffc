@@ -1,4 +1,4 @@
-import type { PaginationState } from '@/lib/shops-api'
+import type { PaginationState } from '@/lib/types'
 import type { PageNumber } from './types'
 
 export function buildNavigationUrl(searchParams: URLSearchParams, page: number): string {

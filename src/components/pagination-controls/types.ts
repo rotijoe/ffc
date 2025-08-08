@@ -1,4 +1,4 @@
-import type { PaginationState } from '@/lib/shops-api'
+import type { PaginationState } from '@/lib/types'
 
 export interface PaginationControlsProps {
   pagination: PaginationState

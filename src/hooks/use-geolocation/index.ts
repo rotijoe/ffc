@@ -1,7 +1,8 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import type { UserLocation, GeolocationError } from '@/lib/supabase'
+import type { UserLocation } from '@/lib/types'
+import type { GeolocationError } from './types'
 import { UseGeolocationReturn } from './types'
 import { GEOLOCATION_ERROR_MESSAGES, GEOLOCATION_ERROR_CODES } from './constants'
 import { 

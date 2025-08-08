@@ -1,18 +1,19 @@
-export interface Shop {
-  fhrs_id: number
-  business_name: string | null
-  address: string | null
-  postcode: string | null
-  latitude?: number | null
-  longitude?: number | null
-  distance_miles?: number
-}
+import type { Database } from './database.types'
 
-export type ShopWithDistance = Shop & {
-  latitude: number
-  longitude: number
-  distance_miles: number
-}
+type FriedChickenShopRow = Database['public']['Tables']['fried_chicken_shops']['Row']
+
+// Base shop type aligned to your DB schema
+export type Shop = Pick<
+  FriedChickenShopRow,
+  'fhrs_id' | 'business_name' | 'address' | 'postcode' | 'latitude' | 'longitude'
+>
+
+// RPC return row type for distance query
+export type GetShopsWithDistanceRow =
+  Database['public']['Functions']['get_shops_with_distance']['Returns'][number]
+
+// Shop shape for UI when distance is present
+export type ShopWithDistance = Omit<GetShopsWithDistanceRow, 'total_count'>
 export interface PaginationState {
   currentPage: number
   totalPages: number
