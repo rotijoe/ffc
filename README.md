@@ -1,6 +1,6 @@
 # FFC - Next.js Project
 
-A modern Next.js application built with TypeScript, Tailwind CSS, and ShadCN UI components.
+A modern Next.js application built with TypeScript, Tailwind CSS, Shadcn UI, and Supabase.
 
 ## Features
 
@@ -8,6 +8,7 @@ A modern Next.js application built with TypeScript, Tailwind CSS, and ShadCN UI 
 - **TypeScript** - Type safety and better developer experience
 - **Tailwind CSS** - Utility-first CSS framework
 - **ShadCN UI** - Beautiful and accessible components built with Radix UI
+- **Supabase** - Database, RPC, and type-safe client integration
 - **ESLint** - Code linting and formatting
 
 ## Project Structure
@@ -28,7 +29,14 @@ src/
 │       ├── constants.ts  # Component constants
 │       └── helpers.ts    # Helper functions
 └── lib/
-    └── utils.ts          # Utility functions
+    ├── api-helpers.ts     # Fetch and pagination helpers
+    ├── shops-api.ts       # Server-side API
+    ├── shops-api-client.ts# Client-side API (incl. RPC)
+    ├── supabase.ts        # Browser client
+    ├── supabase-server.ts # Server client
+    ├── types.ts           # Domain types
+    ├── database.types.ts  # Generated DB types (do not edit)
+    └── utils.ts           # Utility functions
 ```
 
 ## Getting Started
@@ -47,12 +55,21 @@ src/
 
 3. Open [http://localhost:3000](http://localhost:3000) in your browser.
 
+## Documentation
+
+- Architecture: see `ARCHITECTURE_OVERVIEW.md`
+- Data flow & pagination: `DATA_FLOW_AND_PAGINATION.md`
+- Distance/PostGIS setup: `DISTANCE_FEATURE_SETUP.md`
+- Supabase workflow & types: `SUPABASE_WORKFLOW.md`
+
 ## Available Scripts
 
 - `npm run dev` - Start development server
 - `npm run build` - Build for production
 - `npm run start` - Start production server
 - `npm run lint` - Run ESLint
+- `npm run db:types` - Regenerate types from hosted project (requires `SUPABASE_PROJECT_ID`)
+- `npm run db:types:local` - Regenerate types from local Supabase
 
 ## Component Structure
 
