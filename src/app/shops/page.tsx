@@ -2,14 +2,15 @@ import { getShops } from '@/lib/shops-api'
 import { ShopsClientWrapper } from '@/components/shops-client-wrapper'
 
 type Props = {
-  searchParams: Promise<{ page?: string }>
+  searchParams: Promise<{ page?: string; q?: string }>
 }
 
 export default async function ShopsPage({ searchParams }: Props) {
   const params = await searchParams
   const page = Number(params.page) || 1
+  const query = params.q || undefined
 
-  const initialData = await getShops(page)
+  const initialData = await getShops(page, query)
 
   return (
     <div className='container mx-auto px-4 py-8'>

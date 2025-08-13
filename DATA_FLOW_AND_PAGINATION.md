@@ -9,19 +9,30 @@ This guide explains how data is fetched, transformed, and rendered, and how pagi
 
 ## Fetching Helpers
 
-Alphabetical query (server or client) uses `fetchShops`:
+Alphabetical query (server or client) uses `fetchShops` (with optional `query` using PostgreSQL full-text search across name, address, postcode):
 
-```startLine:17:endLine:49:src/lib/api-helpers.ts
+```startLine:17:endLine:48:src/lib/api-helpers.ts
 export async function fetchShops(
   supabase: SupabaseClient<Database>,
   page: number,
+  query?: string,
 ): Promise<ShopListData> {
   const from = (page - 1) * ITEMS_PER_PAGE
   const to = from + ITEMS_PER_PAGE - 1
 
-  const { data, error, count } = await supabase
+  // Base query
+  let builder = supabase
     .from('fried_chicken_shops')
     .select('fhrs_id, business_name, address, postcode, latitude, longitude', { count: 'exact' })
+
+  // Apply full-text search when a search query is provided
+  const trimmedQuery = (query || '').trim()
+  if (trimmedQuery.length > 0) {
+    console.log("🔍 Adding full-text search filter for:", trimmedQuery)
+    builder = builder.textSearch('search_vector', trimmedQuery)
+  }
+
+  const { data, error, count } = await builder
     .order('business_name', { ascending: true })
     .range(from, to)
 
@@ -46,7 +57,7 @@ export async function fetchShops(
 }
 ```
 
-Distance query (client) uses RPC and maps results including `distance_miles`:
+Distance query (client) uses RPC and maps results including `distance_miles` (used only when `query` is empty):
 
 ```startLine:21:endLine:56:src/lib/shops-api-client.ts
 try {
@@ -62,7 +73,7 @@ try {
 
   if (error) {
     // Fallback to basic query without distance calculation
-    return getShopsClient(page)
+    return fetchShops(supabase, page, query)
   }
 
   const rows = (data || []) as GetShopsWithDistanceRow[]
@@ -82,7 +93,7 @@ try {
     pagination,
   }
 } catch (err) {
-  return getShopsClient(page)
+  return fetchShops(supabase, page, query)
 }
 ```
 

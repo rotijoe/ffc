@@ -7,14 +7,11 @@ import type { ShopListData, UserLocation, ShopWithDistance } from './types'
 type GetShopsWithDistanceRow =
   Database['public']['Functions']['get_shops_with_distance']['Returns'][number]
 
-export function getShopsClient(page: number = 1): Promise<ShopListData> {
-  return fetchShops(supabase, page)
-}
-
 // Client-side function to get shops sorted by distance from user location
 export async function getShopsNearLocationClient(
   userLocation: UserLocation,
   page: number = 1,
+  query?: string,
 ): Promise<ShopListData> {
   const from = (page - 1) * ITEMS_PER_PAGE
 
@@ -35,7 +32,7 @@ export async function getShopsNearLocationClient(
         error.message,
       )
       // Fallback to basic query without distance calculation
-      return getShopsClient(page)
+      return fetchShops(supabase, page, query)
     }
 
     const rows = (data || []) as GetShopsWithDistanceRow[]
@@ -57,6 +54,6 @@ export async function getShopsNearLocationClient(
   } catch (err) {
     console.warn('Distance query failed, falling back to basic query:', err)
     // Fallback to basic query
-    return getShopsClient(page)
+    return fetchShops(supabase, page, query)
   }
 }

@@ -86,11 +86,12 @@ Keep SQL helpers in `supabase/sql/` for re-use via Dashboard or CLI.
 
 ## Calling RPC from the Client
 
-```startLine:14:endLine:41:src/lib/shops-api-client.ts
+```startLine:14:endLine:62:src/lib/shops-api-client.ts
 // Client-side function to get shops sorted by distance from user location
 export async function getShopsNearLocationClient(
   userLocation: UserLocation,
   page: number = 1,
+  query?: string,
 ): Promise<ShopListData> {
   const from = (page - 1) * ITEMS_PER_PAGE
 
@@ -106,4 +107,4 @@ export async function getShopsNearLocationClient(
     )
 ```
 
-If `error` occurs, we fall back to the standard query. This makes the feature optional in non-PostGIS environments.
+If `error` occurs, we fall back to the standard query. Distance mode is used only when there is no `q` search; otherwise the alphabetical filter is used. This makes the feature optional in non-PostGIS environments and consistent with search UX.

@@ -10,6 +10,7 @@ A modern Next.js application built with TypeScript, Tailwind CSS, Shadcn UI, and
 - **ShadCN UI** - Beautiful and accessible components built with Radix UI
 - **Supabase** - Database, RPC, and type-safe client integration
 - **ESLint** - Code linting and formatting
+- **Search** - Filter shops by business name, address, or postcode using PostgreSQL full-text search (client-side, debounced) with `?q=` reflected in the URL without navigation
 
 ## Project Structure
 
@@ -58,7 +59,7 @@ src/
 ## Documentation
 
 - Architecture: see `ARCHITECTURE_OVERVIEW.md`
-- Data flow & pagination: `DATA_FLOW_AND_PAGINATION.md`
+- Data flow, pagination & search: `DATA_FLOW_AND_PAGINATION.md`
 - Distance/PostGIS setup: `DISTANCE_FEATURE_SETUP.md`
 - Supabase workflow & types: `SUPABASE_WORKFLOW.md`
 

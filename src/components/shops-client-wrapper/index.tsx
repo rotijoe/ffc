@@ -6,7 +6,8 @@ import type { ShopsClientWrapperProps } from './types'
 
 export function ShopsClientWrapper({
   initialData,
-  initialPage
+  initialPage,
+  initialQuery
 }: ShopsClientWrapperProps) {
   const {
     location,
@@ -18,6 +19,7 @@ export function ShopsClientWrapper({
     <ShopListClient
       initialData={initialData}
       page={initialPage}
+      initialQuery={initialQuery}
       userLocation={location}
       isLocationLoading={isLocationLoading}
       locationError={locationError}

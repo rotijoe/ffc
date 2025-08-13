@@ -13,6 +13,7 @@ export interface GeolocationError {
 export interface ShopListClientProps {
   initialData: ShopListData
   page: number
+  initialQuery?: string
   userLocation: UserLocation | null
   isLocationLoading: boolean
   locationError: GeolocationError | null

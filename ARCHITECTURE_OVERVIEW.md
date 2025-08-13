@@ -12,9 +12,12 @@ This document explains how the app is structured and how data flows from the ser
 ## High-Level Flow
 
 - Server renders `/shops` using a React Server Component page.
-- The page fetches the first page of shops from the database on the server.
+- The page fetches the first page of shops from the database on the server, optionally filtered by a `q` query string.
 - A client wrapper asks the browser for the user’s geolocation.
-- The main client list switches to distance-based fetching when a location is available; otherwise it falls back to alphabetical sorting.
+- The main client list:
+  - Debounced client-side search that uses PostgreSQL full-text search across business_name, address, and postcode
+  - Updates the URL’s `?q=` using `history.replaceState` (no navigation/remount)
+  - Uses distance-based results only when no `q` is present, otherwise alphabetical filtered results with full-text search
 
 ## Key Files
 
@@ -36,14 +39,15 @@ import { getShops } from '@/lib/shops-api'
 import { ShopsClientWrapper } from '@/components/shops-client-wrapper'
 
 type Props = {
-  searchParams: Promise<{ page?: string }>
+  searchParams: Promise<{ page?: string; q?: string }>
 }
 
 export default async function ShopsPage({ searchParams }: Props) {
   const params = await searchParams
   const page = Number(params.page) || 1
+  const query = params.q || undefined
 
-  const initialData = await getShops(page)
+  const initialData = await getShops(page, query)
 
   return (
     <div className='container mx-auto px-4 py-8'>
@@ -84,9 +88,27 @@ export function ShopsClientWrapper({
 }
 ```
 
-3. Client List decides how to fetch and renders UI states:
+3. Client List orchestrates search, geolocation, and states:
 
-```startLine:37:endLine:114:src/components/shop-list-client/index.tsx
+```startLine:33:endLine:87:src/components/shop-list-client/index.tsx
+const [query, setQuery] = useState(searchParams.get('q') || '')
+
+// Persist query to URL without navigation/remount
+useEffect(() => {
+  const id = setTimeout(() => {
+    const params = new URLSearchParams(searchParams.toString())
+    if (query.trim() === '') params.delete('q')
+    else params.set('q', query.trim())
+    // reset pagination on new search
+    params.delete('page')
+    const qs = params.toString()
+    if (typeof window !== 'undefined') {
+      window.history.replaceState(null, '', `${pathname}${qs ? `?${qs}` : ''}`)
+    }
+  }, 300)
+  return () => clearTimeout(id)
+}, [query, pathname, searchParams])
+
 useEffect(() => {
   const fetchData = async () => {
     if (isGeoLocationPending || isLoadingRef.current) return
@@ -96,10 +118,12 @@ useEffect(() => {
 
     try {
       let result: ShopListData
-      if (userLocation) {
-        result = await getShopsNearLocationClient(userLocation, page)
+
+      // Automatically sort by distance if user location is available and no search query
+      if (userLocation && query === '') {
+        result = await getShopsNearLocationClient(userLocation, page, query)
       } else {
-        result = await getShopsClient(page)
+        result = await fetchShops(supabase, page, query)
       }
       setData(result)
       setHasInitiallyLoaded(true)
@@ -111,13 +135,13 @@ useEffect(() => {
     }
   }
   fetchData()
-}, [userLocation, page, isGeoLocationPending])
+}, [userLocation, page, isGeoLocationPending, query])
 ```
 
 ## Data Fetching
 
-- Server-side (alphabetical): `getShops(page)` uses `fetchShops` to query `fried_chicken_shops`, ordered by `business_name`, with total count and pagination.
-- Client-side (distance): `getShopsNearLocationClient(userLocation, page)` calls RPC `get_shops_with_distance` (PostGIS). If RPC fails or PostGIS isn’t enabled, it falls back to the basic alphabetical query.
+- Server-side (alphabetical): `getShops(page, query?)` uses `fetchShops` to query `fried_chicken_shops`, ordered by `business_name`, with total count and pagination. When `query` is present, it uses PostgreSQL full-text search via `textSearch('search_vector', query)` across `business_name`, `address`, and `postcode`.
+- Client-side (distance): `getShopsNearLocationClient(userLocation, page, query?)` calls RPC `get_shops_with_distance`. Distance mode is used only when no `query` is present; otherwise we fetch alphabetical filtered results.
 
 ## Pagination
 
@@ -134,6 +158,7 @@ useEffect(() => {
 - `ShopCard`: displays name, address, and (if available) distance.
 - `PaginationControls`: builds clean URLs and shows page numbers/ellipsis based on total pages.
 - `ShopListSkeleton`: consistent skeletons for list and pagination while loading.
+- `ShopsSearch`: controlled search input that updates `?q=` without navigation.
 
 ## Error Handling
 

@@ -46,7 +46,7 @@ Your fried chicken shop finder now has enhanced location controls with better us
 1. **Loading State**: "Getting your location..." with animated icon
 2. **Success State**: "Location detected successfully!"
 3. **Sort Button**: Enabled with "Sort by Distance" option
-4. **Shop Cards**: Display distances when sorted by location
+4. **Shop Cards**: Display distances when sorted by location (distance mode is disabled when a search query `q` is present)
 
 ### **Permission Denied**
 
