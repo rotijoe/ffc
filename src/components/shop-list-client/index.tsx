@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { ShopCard } from '../shop-list-card'
 import { PaginationControls } from '../pagination-controls'
 import { ShopListSkeleton } from '../shop-list-skeleton'
@@ -9,10 +9,52 @@ import { formatErrorMessage, isGeolocationPending } from './helpers'
 import { ERROR_MESSAGES } from './constants'
 import type { ShopListClientProps } from './types'
 import { ShopListData } from '@/lib/types'
-import { usePathname, useSearchParams } from 'next/navigation'
+import { usePathname, useSearchParams, useRouter } from 'next/navigation'
 import { ShopsSearch } from '@/components/shops-search'
 import { supabase } from '@/lib/supabase'
 import { fetchShops } from '@/lib/api-helpers'
+
+// Custom hook for debounced URL updates
+function useUrlUpdate(query: string, delay: number = 500) {
+  const pathname = usePathname()
+  const searchParams = useSearchParams()
+  const router = useRouter()
+
+  useEffect(() => {
+    const params = new URLSearchParams(searchParams.toString())
+
+    // Update query parameter
+    if (query.trim() === '') {
+      params.delete('q')
+    } else {
+      params.set('q', query.trim())
+    }
+
+    // Reset pagination on new search
+    params.delete('page')
+
+    // Update URL without navigation
+    const newUrl = `${pathname}${
+      params.toString() ? `?${params.toString()}` : ''
+    }`
+    router.replace(newUrl, { scroll: false })
+  }, [query, pathname, searchParams, router, delay])
+}
+
+// Custom hook for debounced search query
+function useDebouncedQuery(query: string, delay: number = 500) {
+  const [debouncedQuery, setDebouncedQuery] = useState(query)
+
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      setDebouncedQuery(query)
+    }, delay)
+
+    return () => clearTimeout(timeoutId)
+  }, [query, delay])
+
+  return debouncedQuery
+}
 
 export function ShopListClient({
   initialData,
@@ -27,28 +69,12 @@ export function ShopListClient({
   const isLoadingRef = useRef(false)
   const [hasInitiallyLoaded, setHasInitiallyLoaded] = useState(false)
   const searchParams = useSearchParams()
-  const pathname = usePathname()
   const [query, setQuery] = useState(searchParams.get('q') || '')
 
-  // Persist query to URL without causing full rerender
-  useEffect(() => {
-    const id = setTimeout(() => {
-      const params = new URLSearchParams(searchParams.toString())
-      if (query.trim() === '') params.delete('q')
-      else params.set('q', query.trim())
-      // reset pagination on new search
-      params.delete('page')
-      const qs = params.toString()
-      if (typeof window !== 'undefined') {
-        window.history.replaceState(
-          null,
-          '',
-          `${pathname}${qs ? `?${qs}` : ''}`
-        )
-      }
-    }, 300)
-    return () => clearTimeout(id)
-  }, [query, pathname, searchParams])
+  useUrlUpdate(query)
+
+  // Debounced query for API calls (500ms for better UX)
+  const debouncedQuery = useDebouncedQuery(query, 500)
 
   // Determine if geolocation is still determining location status
   const isGeoLocationPending = isGeolocationPending(
@@ -58,37 +84,42 @@ export function ShopListClient({
     hasInitiallyLoaded
   )
 
-  useEffect(() => {
-    const fetchData = async () => {
-      // Don't fetch data while geolocation is still determining location status
-      if (isGeoLocationPending || isLoadingRef.current) return
+  // Memoized fetch function to prevent unnecessary re-renders
+  const fetchData = useCallback(async () => {
+    // Don't fetch data while geolocation is still determining location status
+    if (isGeoLocationPending || isLoadingRef.current) return
 
-      isLoadingRef.current = true
-      setIsLoading(true)
-      setError(null)
+    isLoadingRef.current = true
+    setIsLoading(true)
+    setError(null)
 
-      try {
-        let result: ShopListData
+    try {
+      let result: ShopListData
 
-        // Automatically sort by distance if user location is available and no search query
-        if (userLocation && query === '') {
-          result = await getShopsNearLocationClient(userLocation, page, query)
-        } else {
-          result = await fetchShops(supabase, page, query)
-        }
-
-        setData(result)
-        setHasInitiallyLoaded(true)
-      } catch (err) {
-        setError(formatErrorMessage(err))
-      } finally {
-        isLoadingRef.current = false
-        setIsLoading(false)
+      // Automatically sort by distance if user location is available and no search query
+      if (userLocation && debouncedQuery === '') {
+        result = await getShopsNearLocationClient(
+          userLocation,
+          page,
+          debouncedQuery
+        )
+      } else {
+        result = await fetchShops(supabase, page, debouncedQuery)
       }
-    }
 
+      setData(result)
+      setHasInitiallyLoaded(true)
+    } catch (err) {
+      setError(formatErrorMessage(err))
+    } finally {
+      isLoadingRef.current = false
+      setIsLoading(false)
+    }
+  }, [userLocation, page, isGeoLocationPending, debouncedQuery])
+
+  useEffect(() => {
     fetchData()
-  }, [userLocation, page, isGeoLocationPending, query])
+  }, [fetchData])
 
   return (
     <div className='space-y-6'>
