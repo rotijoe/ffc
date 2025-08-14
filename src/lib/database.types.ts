@@ -588,6 +588,25 @@ export type Database = {
           total_count: number
         }[]
       }
+      get_shops_with_distance_and_search: {
+        Args: {
+          user_lat: number
+          user_lng: number
+          search_query: string
+          page_offset?: number
+          page_limit?: number
+        }
+        Returns: {
+          fhrs_id: number
+          business_name: string
+          address: string
+          postcode: string
+          latitude: number
+          longitude: number
+          distance_miles: number
+          total_count: number
+        }[]
+      }
       gettransactionid: {
         Args: Record<PropertyKey, never>
         Returns: unknown

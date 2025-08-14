@@ -57,43 +57,94 @@ export async function fetchShops(
 }
 ```
 
-Distance query (client) uses RPC and maps results including `distance_miles` (used only when `query` is empty):
+Distance query (client) uses RPC and maps results including `distance_miles` (used whenever user location is available):
 
-```startLine:21:endLine:56:src/lib/shops-api-client.ts
+```startLine:21:endLine:95:src/lib/shops-api-client.ts
+const trimmedQuery = (query || '').trim()
+
 try {
-  const { data, error } = await supabase.rpc(
-    'get_shops_with_distance',
-    {
-      user_lat: userLocation.latitude,
-      user_lng: userLocation.longitude,
-      page_offset: from,
-      page_limit: ITEMS_PER_PAGE,
-    },
-  )
+  let result: ShopListData
 
-  if (error) {
-    // Fallback to basic query without distance calculation
-    return fetchShops(supabase, page, query)
+  if (trimmedQuery.length > 0) {
+    // Use new function for search + distance
+    const { data, error } = await supabase.rpc(
+      'get_shops_with_distance_and_search',
+      {
+        user_lat: userLocation.latitude,
+        user_lng: userLocation.longitude,
+        search_query: trimmedQuery,
+        page_offset: from,
+        page_limit: ITEMS_PER_PAGE,
+      },
+    )
+
+    if (error) {
+      console.warn(
+        'Search + distance function not available, falling back to basic search:',
+        error.message,
+      )
+      // Fallback to basic search without distance
+      return fetchShops(supabase, page, trimmedQuery)
+    }
+
+    const rows = (data || []) as GetShopsWithDistanceRow[]
+    const totalCount = rows.length > 0 ? rows[0].total_count || 0 : 0
+    const pagination = calculatePagination(totalCount, page)
+
+    result = {
+      shops: rows.map((row) => ({
+        fhrs_id: row.fhrs_id,
+        business_name: row.business_name,
+        address: row.address,
+        postcode: row.postcode,
+        latitude: row.latitude,
+        longitude: row.longitude,
+        distance_miles: row.distance_miles,
+      } satisfies ShopWithDistance)),
+      pagination,
+    }
+  } else {
+    // Use existing function for distance-only (no search)
+    const { data, error } = await supabase.rpc(
+      'get_shops_with_distance',
+      {
+        user_lat: userLocation.latitude,
+        user_lng: userLocation.longitude,
+        page_offset: from,
+        page_limit: ITEMS_PER_PAGE,
+      },
+    )
+
+    if (error) {
+      console.warn(
+        'Distance function not available, falling back to basic query:',
+        error.message,
+      )
+      return fetchShops(supabase, page)
+    }
+
+    const rows = (data || []) as GetShopsWithDistanceRow[]
+    const totalCount = rows.length > 0 ? rows[0].total_count || 0 : 0
+    const pagination = calculatePagination(totalCount, page)
+
+    result = {
+      shops: rows.map((row) => ({
+        fhrs_id: row.fhrs_id,
+        business_name: row.business_name,
+        address: row.address,
+        postcode: row.postcode,
+        latitude: row.latitude,
+        longitude: row.longitude,
+        distance_miles: row.distance_miles,
+      } satisfies ShopWithDistance)),
+      pagination,
+    }
   }
 
-  const rows = (data || []) as GetShopsWithDistanceRow[]
-  const totalCount = rows.length > 0 ? rows[0].total_count || 0 : 0
-  const pagination = calculatePagination(totalCount, page)
-
-  return {
-    shops: rows.map((row) => ({
-      fhrs_id: row.fhrs_id,
-      business_name: row.business_name,
-      address: row.address,
-      postcode: row.postcode,
-      latitude: row.latitude,
-      longitude: row.longitude,
-      distance_miles: row.distance_miles,
-    } satisfies ShopWithDistance)),
-    pagination,
-  }
+  return result
 } catch (err) {
-  return fetchShops(supabase, page, query)
+  console.warn('Distance query failed, falling back to basic query:', err)
+  return fetchShops(supabase, page, trimmedQuery)
 }
 ```
 

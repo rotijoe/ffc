@@ -141,7 +141,7 @@ useEffect(() => {
 ## Data Fetching
 
 - Server-side (alphabetical): `getShops(page, query?)` uses `fetchShops` to query `fried_chicken_shops`, ordered by `business_name`, with total count and pagination. When `query` is present, it uses PostgreSQL full-text search via `textSearch('search_vector', query)` across `business_name`, `address`, and `postcode`.
-- Client-side (distance): `getShopsNearLocationClient(userLocation, page, query?)` calls RPC `get_shops_with_distance`. Distance mode is used only when no `query` is present; otherwise we fetch alphabetical filtered results.
+- Client-side (distance): `getShopsNearLocationClient(userLocation, page, query?)` calls RPC `get_shops_with_distance` when no search query is present, or `get_shops_with_distance_and_search` when a search query is provided. Distance mode is used whenever user location is available, providing distance-sorted results for both search and non-search scenarios.
 
 ## Pagination
 

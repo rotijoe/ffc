@@ -96,13 +96,14 @@ export function ShopListClient({
     try {
       let result: ShopListData
 
-      // Automatically sort by distance if user location is available and no search query
-      if (userLocation && debouncedQuery === '') {
+      // Use distance sorting when user location is available (for both search and no search)
+      if (userLocation) {
         result = await getShopsNearLocationClient(
           userLocation,
           page,
           debouncedQuery
         )
+        console.log('result', result)
       } else {
         result = await fetchShops(supabase, page, debouncedQuery)
       }
