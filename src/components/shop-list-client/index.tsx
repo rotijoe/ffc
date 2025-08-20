@@ -4,15 +4,18 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 import { ShopCard } from '../shop-list-card'
 import { PaginationControls } from '../pagination-controls'
 import { ShopListSkeleton } from '../shop-list-skeleton'
-import { getShopsNearLocationClient } from '@/lib/shops-api-client'
-import { formatErrorMessage, isGeolocationPending } from './helpers'
+import {
+  formatErrorMessage,
+  getShopsNearLocationClient,
+  isGeolocationPending
+} from './helpers'
 import { ERROR_MESSAGES } from './constants'
 import type { ShopListClientProps } from './types'
 import { ShopListData } from '@/lib/types'
 import { usePathname, useSearchParams, useRouter } from 'next/navigation'
 import { ShopsSearch } from '@/components/shops-search'
 import { supabase } from '@/lib/supabase'
-import { fetchShops } from '@/lib/api-helpers'
+import { fetchShops } from '@/lib/fetch-shops'
 
 // Custom hook for debounced URL updates
 function useUrlUpdate(query: string, delay: number = 500) {

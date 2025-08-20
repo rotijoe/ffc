@@ -1,4 +1,4 @@
-import type { Database } from './database.types'
+import type { Database } from '../types/database.types'
 
 type FriedChickenShopRow = Database['public']['Tables']['fried_chicken_shops']['Row']
 

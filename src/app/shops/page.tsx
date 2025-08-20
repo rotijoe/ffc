@@ -1,5 +1,5 @@
-import { getShops } from '@/lib/shops-api'
 import { ShopsClientWrapper } from '@/components/shops-client-wrapper'
+import { getShops } from './helpers'
 
 type Props = {
   searchParams: Promise<{ page?: string; q?: string }>
