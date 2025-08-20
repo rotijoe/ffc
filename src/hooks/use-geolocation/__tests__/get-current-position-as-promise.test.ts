@@ -83,8 +83,11 @@ test('getCurrentPositionAsPromise passes options to getCurrentPosition', async (
 test('getCurrentPositionAsPromise rejects on geolocation error', async () => {
   const mockError = {
     code: GeolocationPositionError.PERMISSION_DENIED,
-    message: 'Permission denied'
-  }
+    message: 'Permission denied',
+    PERMISSION_DENIED: 1 as const,
+    POSITION_UNAVAILABLE: 2 as const,
+    TIMEOUT: 3 as const
+  } as GeolocationPositionError
 
   const mockGeolocation = {
     getCurrentPosition: jest.fn((success: PositionCallback, error: PositionErrorCallback) => {

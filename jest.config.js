@@ -10,10 +10,19 @@ const customJestConfig = {
   setupFilesAfterEnv: ['<rootDir>/jest.setup.js'],
   testEnvironment: 'jsdom',
   testPathIgnorePatterns: ['<rootDir>/.next/', '<rootDir>/node_modules/'],
+  transformIgnorePatterns: ['node_modules/(?!(@supabase|isows|ws)/.*)'],
+  moduleNameMapper: {
+    '^@/(.*)$': '<rootDir>/src/$1',
+    '^@supabase/supabase-js$':
+      '<rootDir>/src/__mocks__/@supabase/supabase-js.ts'
+  },
   collectCoverageFrom: [
     'src/**/*.{js,jsx,ts,tsx}',
     '!src/**/*.d.ts',
-    '!src/**/*.stories.{js,jsx,ts,tsx}'
+    '!src/**/*.stories.{js,jsx,ts,tsx}',
+    '!src/components/ui/**/*.{js,jsx,ts,tsx}',
+    '!src/types/**/*.{js,jsx,ts,tsx}',
+    '!src/constants/**/*.{js,jsx,ts,tsx}'
   ]
 }
 

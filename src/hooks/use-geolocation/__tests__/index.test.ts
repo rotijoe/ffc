@@ -36,7 +36,7 @@ test('returns initial state with geolocation not supported', () => {
   })
 })
 
-test('returns initial state with geolocation supported', () => {
+test('returns initial state with geolocation supported', async () => {
   mockHelpers.isGeolocationSupported.mockReturnValue(true)
   mockHelpers.getCurrentPositionAsPromise.mockResolvedValue({
     coords: { latitude: 51.5074, longitude: -0.1278 }
@@ -48,8 +48,16 @@ test('returns initial state with geolocation supported', () => {
   
   const { result } = renderHook(() => useGeolocation())
   
+  // Wait for the initial effect to complete
+  await waitFor(() => {
+    expect(result.current.isLoading).toBe(false)
+  })
+  
   expect(result.current.isSupported).toBe(true)
-  expect(result.current.isLoading).toBe(true)
+  expect(result.current.location).toEqual({
+    latitude: 51.5074,
+    longitude: -0.1278
+  })
 })
 
 test('does not set error automatically when geolocation is not supported', () => {
@@ -156,10 +164,22 @@ test('handles position unavailable error', async () => {
   expect(result.current.location).toBe(null)
 })
 
-test('does not auto-fetch location if already has location', () => {
+test('does not auto-fetch location if already has location', async () => {
   mockHelpers.isGeolocationSupported.mockReturnValue(true)
+  mockHelpers.getCurrentPositionAsPromise.mockResolvedValue({
+    coords: { latitude: 51.5074, longitude: -0.1278 }
+  })
+  mockHelpers.extractLocationFromPosition.mockReturnValue({
+    latitude: 51.5074,
+    longitude: -0.1278
+  })
   
-  const { rerender } = renderHook(() => useGeolocation())
+  const { result, rerender } = renderHook(() => useGeolocation())
+  
+  // Wait for initial location fetch to complete
+  await waitFor(() => {
+    expect(result.current.location).toBeTruthy()
+  })
   
   // Clear the mock calls from initial render
   mockHelpers.getCurrentPositionAsPromise.mockClear()
